@@ -209,3 +209,6 @@ include_directories(
 
 ## Add folders to be run by python nosetests
 # catkin_add_nosetests(test)
+
+add_executable(drone_teleop_key src/drone_teleop_key.cpp)
+target_link_libraries(drone_teleop_key ${catkin_LIBRARIES})
