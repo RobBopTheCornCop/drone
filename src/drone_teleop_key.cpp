@@ -36,6 +36,9 @@ private:
   static const char KEY_S = 0x73;
   static const char KEY_U = 0x75;
   static const char KEY_W = 0x77;
+  static const char KEY_L = 0x6c;
+  static const char KEY_I = 0x69;
+  static const char KEY_K = 0x6b;
   
   static const char KEYCODE_SPACE  = 0x20;
 
@@ -50,6 +53,8 @@ private:
 
   const double LINEAR_VEL  = 0.2;
   const double ANGULAR_VEL = 0.4;
+  const double VERTICAL_VEL = 2.5;
+  const double HORIZONTAL_VEL = 0.2;
   const double JOINT_MIN = -2.83;
   const double JOINT_MAX = +2.83;
   const double GRIP_MIN = -0.01;
@@ -66,7 +71,7 @@ private:
   static int  canReceiveKey( const int fd );
 
   void jointStateCallback(const sensor_msgs::JointState::ConstPtr& joint_state);
-  void moveBase(ros::Publisher &publisher, const double linear_x, const double angular_z);
+  void moveBase(ros::Publisher &publisher, const double linear_x, const double linear_y, const double linear_z, const double angular_z);
   void moveArm(ros::Publisher &publisher, const std::string &name, const double position, const double current_pos);
   void moveHand(ros::Publisher &publisher, const double position, const double current_pos);
   void stopJoints(ros::Publisher &publisher, const int duration_sec);
@@ -147,13 +152,13 @@ void SIGVerseTb3OpenManipulatorGraspingTeleopKey::jointStateCallback(const senso
   }
 }
 
-void SIGVerseTb3OpenManipulatorGraspingTeleopKey::moveBase(ros::Publisher &publisher, const double linear_x, const double angular_z)
+void SIGVerseTb3OpenManipulatorGraspingTeleopKey::moveBase(ros::Publisher &publisher, const double linear_x, const double linear_y, const double linear_z, const double angular_z)
 {
   geometry_msgs::Twist twist;
 
   twist.linear.x  = linear_x;
-  twist.linear.y  = 0.0;
-  twist.linear.z  = 0.0;
+  twist.linear.y  = linear_y;
+  twist.linear.z  = linear_z;
   twist.angular.x = 0.0;
   twist.angular.y = 0.0;
   twist.angular.z = angular_z;
@@ -256,7 +261,7 @@ void SIGVerseTb3OpenManipulatorGraspingTeleopKey::showHelp()
 {
   puts("\n");
   puts("---------------------------");
-  puts("Operate from keyboard");
+  //puts("Operate from keyboard");
   puts("---------------------------");
   puts("arrow keys : Move");
   puts("---------------------------");
@@ -267,13 +272,13 @@ void SIGVerseTb3OpenManipulatorGraspingTeleopKey::showHelp()
   puts("d: Strafe Right");
   puts("a: Strafe Left");
   puts("---------------------------");
-  puts("u: Upward");
+  puts("i: Upward");
   //puts("j: Rotate Arm - Horizontal");
-  puts("m: Downward");
+  puts("k: Downward");
   puts("---------------------------");
-  puts("1: Turn Left");
+  puts("j: Turn Left");
   //puts("2: Joint1 Left");
-  puts("3: Turn Right");
+  puts("l: Turn Right");
   /*puts("4: Joint2 Down");
   puts("5: Joint3 Up");
   puts("6: Joint3 Down");
@@ -351,36 +356,61 @@ void SIGVerseTb3OpenManipulatorGraspingTeleopKey::keyLoop(int argc, char** argv)
         case KEYCODE_SPACE:
         {
           ROS_DEBUG("Stop");
-          moveBase(pub_base_twist, 0.0, 0.0);
-          stopJoints(pub_joint_traj, 1.0);
+          moveBase(pub_base_twist, 0.0, 0.0, 0.0, 0.0);
+          //stopJoints(pub_joint_traj, 1.0);
           break;
         }
+        // X, Y, Z, Turn Z
         case KEY_W:
-        case KEYCODE_UP:
+        //case KEYCODE_UP:
         {
           ROS_DEBUG("Go Forward");
-          moveBase(pub_base_twist, +LINEAR_VEL, 0.0);
-          break;
-        }
-        case KEY_S:
-        case KEYCODE_DOWN:
-        {
-          ROS_DEBUG("Go Back");
-          moveBase(pub_base_twist, -LINEAR_VEL, 0.0);
+          moveBase(pub_base_twist, +LINEAR_VEL, 0.0, 0.0, 0.0);
           break;
         }
         case KEY_D:
-        case KEYCODE_RIGHT:
         {
-          ROS_DEBUG("Turn Right");
-          moveBase(pub_base_twist, 0.0, -ANGULAR_VEL);
+          ROS_DEBUG("Strafe Right");
+          moveBase(pub_base_twist, 0.0, +HORIZONTAL_VEL, 0.0, 0.0);
           break;
         }
         case KEY_A:
-        case KEYCODE_LEFT:
+        {
+          ROS_DEBUG("Strafe Left");
+          moveBase(pub_base_twist, 0.0, -HORIZONTAL_VEL, 0.0, 0.0);
+          break;
+        }
+        case KEY_S:
+        //case KEYCODE_DOWN:
+        {
+          ROS_DEBUG("Go Back");
+          moveBase(pub_base_twist, -LINEAR_VEL, 0.0, 0.0, 0.0);
+          break;
+        }
+        case KEY_L:
+        //case KEYCODE_RIGHT:
+        {
+          ROS_DEBUG("Turn Right");
+          moveBase(pub_base_twist, 0.0, 0.0, 0.0, +ANGULAR_VEL);
+          break;
+        }
+        case KEY_J:
+        //case KEYCODE_LEFT:
         {
           ROS_DEBUG("Turn Left");
-          moveBase(pub_base_twist, 0.0, +ANGULAR_VEL);
+          moveBase(pub_base_twist, 0.0, 0.0, 0.0, -ANGULAR_VEL);
+          break;
+        }
+        case KEY_I:
+        {
+          ROS_DEBUG("Go Up");
+          moveBase(pub_base_twist, 0.0, 0.0, +VERTICAL_VEL, 0.0);
+          break;
+        }
+        case KEY_K:
+        {
+          ROS_DEBUG("Go Up");
+          moveBase(pub_base_twist, 0.0, 0.0, -VERTICAL_VEL, 0.0);
           break;
         }
         case KEY_U:
@@ -391,14 +421,17 @@ void SIGVerseTb3OpenManipulatorGraspingTeleopKey::keyLoop(int argc, char** argv)
           moveArm(pub_joint_traj, JOINT4_NAME, 0.0, joint4_pos1_);
           break;
         }
-        case KEY_J:
+        /*case KEY_J:
         {
           ROS_DEBUG("Rotate Arm - Horizontal");
           moveArm(pub_joint_traj, JOINT2_NAME, +1.57, joint2_pos1_);
           moveArm(pub_joint_traj, JOINT3_NAME, -1.57, joint3_pos1_);
           moveArm(pub_joint_traj, JOINT4_NAME, +0.26, joint4_pos1_);
           break;
-        }
+          ROS_DEBUG("Turn Left");
+          moveBase(pub_base_twist, 0.0, +ANGULAR_VEL);
+          break;
+        }*/
         case KEY_M:
         {
           ROS_DEBUG("Rotate Arm - Downward");
