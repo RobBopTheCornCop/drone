@@ -1,7 +1,7 @@
 <launch>
-	<arg name="sub_joint_state_topic_name"      default="/tb3omc/joint_state" />
+	
 	<arg name="pub_twist_topic_name"            default="/tb3omc/cmd_vel" />
-	<arg name="pub_joint_trajectory_topic_name" default="/tb3omc/joint_trajectory" />
+	
 	
 	<arg name="sigverse_ros_bridge_port"        default="50001" />
 	<arg name="ros_bridge_port"                 default="9090" />
@@ -11,9 +11,9 @@
 	<group ns="drone_teleop_key">
 		<node name="drone_teleop_key" pkg="drone" type="drone_teleop_key" output="screen" launch-prefix="gnome-terminal -t 'drone teleop key' -e">
 
-			<param name="sub_joint_state_topic_name"      type="string" value="$(arg sub_joint_state_topic_name)" />
+			
 			<param name="pub_twist_topic_name"            type="string" value="$(arg pub_twist_topic_name)" />
-			<param name="pub_joint_trajectory_topic_name" type="string" value="$(arg pub_joint_trajectory_topic_name)" />
+			
 
 		</node>
 	</group>
